@@ -1,154 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Corner Log</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 16px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .card {
-      background: #fff;
-      padding: 16px;
-      border-radius: 10px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .question {
-      margin-bottom: 10px;
-    }
-    .buttons button {
-      margin: 5px 5px 0 0;
-      padding: 10px 14px;
-      font-size: 16px;
-    }
-    button {
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background: #eee;
-    }
-    button.active {
-      background: #4caf50;
-      color: #fff;
-    }
-    #submit {
-      width: 100%;
-      font-size: 18px;
-      padding: 12px;
-      background: #2196f3;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-    }
-    #log {
-      font-size: 14px;
-      margin-top: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Corner Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 16px;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+.question {
+  margin-bottom: 12px;
+}
+.buttons button {
+  margin: 6px 6px 0 0;
+  padding: 12px 14px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #eee;
+}
+.buttons button.active {
+  background: #4caf50;
+  color: #fff;
+}
+#submit {
+  width: 100%;
+  font-size: 18px;
+  padding: 14px;
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+}
+.smallbtn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+.muted {
+  color: #666;
+  font-size: 13px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border-bottom: 1px solid #eee;
+  padding: 8px;
+}
+th {
+  font-size: 12px;
+  color: #444;
+}
+</style>
 </head>
+
 <body>
 
 <h1>Corner Log</h1>
 
 <div class="card">
+
   <div class="question">
     <strong>Label</strong>
     <div class="buttons" data-field="label">
-      <button>Earned</button>
-      <button>Invited</button>
-      <button>Late</button>
+      <button type="button">Earned</button>
+      <button type="button">Invited</button>
+      <button type="button">Late</button>
+    </div>
+    <div class="muted">
+      Earned = opponent forced it • Invited = shot before • Late = recovery/ready
     </div>
   </div>
 
   <div class="question">
-    <strong>Prev ball inside service line?</strong>
+    <strong>Previous ball inside service line?</strong>
     <div class="buttons" data-field="inside">
-      <button>Yes</button>
-      <button>No</button>
+      <button type="button">Yes</button>
+      <button type="button">No</button>
     </div>
   </div>
 
   <div class="question">
-    <strong>Prev ball flat / low?</strong>
+    <strong>Previous ball flat / low margin?</strong>
     <div class="buttons" data-field="flat">
-      <button>Yes</button>
-      <button>No</button>
+      <button type="button">Yes</button>
+      <button type="button">No</button>
     </div>
   </div>
 
   <div class="question">
     <strong>Hit to opponent strength?</strong>
     <div class="buttons" data-field="strength">
-      <button>Yes</button>
-      <button>No</button>
+      <button type="button">Yes</button>
+      <button type="button">No</button>
     </div>
   </div>
 
   <div class="question">
     <strong>Recovery assumed safe rally?</strong>
     <div class="buttons" data-field="recovery">
-      <button>Yes</button>
-      <button>No</button>
+      <button type="button">Yes</button>
+      <button type="button">No</button>
     </div>
   </div>
 
   <button id="submit">Log Corner</button>
 </div>
 
-<div id="log"></div>
+<div class="card">
+  <strong>Summary</strong>
+  <div id="summary" class="muted">No entries yet</div>
+</div>
+
+<div class="card">
+  <div style="display:flex; gap:10px; margin-bottom:8px;">
+    <button class="smallbtn" id="export">Export CSV</button>
+    <button class="smallbtn" id="reset">Reset Match</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Label</th>
+        <th>Inside</th>
+        <th>Flat</th>
+        <th>Strength</th>
+        <th>Recovery</th>
+        <th>Shot-Before</th>
+      </tr>
+    </thead>
+    <tbody id="log"></tbody>
+  </table>
+</div>
 
 <script>
-  let data = [];
-  let current = {};
-  let cornerCount = 0;
+const STORAGE = "corner_log_data_v1";
+let entries = JSON.parse(localStorage.getItem(STORAGE) || "[]");
+let current = {};
 
-  document.querySelectorAll('.buttons').forEach(group => {
-    group.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        current[group.dataset.field] = btn.innerText;
-      });
-    });
+function save() {
+  localStorage.setItem(STORAGE, JSON.stringify(entries));
+}
+
+function updateSummary() {
+  if (!entries.length) {
+    summary.textContent = "No entries yet";
+    return;
+  }
+  const c = {Earned:0, Invited:0, Late:0};
+  entries.forEach(e => c[e.label]++);
+  summary.textContent =
+    `${entries.length} corners • Invited ${Math.round(c.Invited/entries.length*100)}% • Earned ${Math.round(c.Earned/entries.length*100)}% • Late ${Math.round(c.Late/entries.length*100)}%`;
+}
+
+function render() {
+  log.innerHTML = "";
+  entries.forEach((e,i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${e.label}</td>
+      <td>${e.inside}</td>
+      <td>${e.flat}</td>
+      <td>${e.strength}</td>
+      <td>${e.recovery}</td>
+      <td><strong>${e.shotBefore}</strong></td>`;
+    log.appendChild(tr);
   });
+  updateSummary();
+}
 
-  document.getElementById('submit').addEventListener('click', () => {
-    if (!current.label) {
-      alert("Please select a label");
-      return;
-    }
-
-    cornerCount++;
-
-    const yesCount = ["inside","flat","strength","recovery"]
-      .filter(k => current[k] === "Yes").length;
-
-    const shotBefore = yesCount >= 2 ? "YES" : "NO";
-
-    const entry = {
-      corner: cornerCount,
-      ...current,
-      shotBefore
+document.querySelectorAll(".buttons").forEach(group => {
+  group.querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => {
+      group.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      current[group.dataset.field] = btn.textContent;
     };
-
-    data.push(entry);
-    current = {};
-
-    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-
-    document.getElementById('log').innerHTML =
-      "<strong>Last entry:</strong><br>" +
-      JSON.stringify(entry, null, 2).replace(/\n/g,"<br>");
-
   });
+});
+
+submit.onclick = () => {
+  if (!current.label || !current.inside || !current.flat || !current.strength || !current.recovery) {
+    alert("Answer all questions");
+    return;
+  }
+  const yesCount = ["inside","flat","strength","recovery"].filter(k => current[k]==="Yes").length;
+  current.shotBefore = yesCount >= 2 ? "YES" : "NO";
+  entries.push({...current});
+  current = {};
+  document.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+  save();
+  render();
+};
+
+reset.onclick = () => {
+  if (confirm("Reset match?")) {
+    entries = [];
+    save();
+    render();
+  }
+};
+
+export.onclick = () => {
+  if (!entries.length) return;
+  let csv = "label,inside,flat,strength,recovery,shotBefore\n";
+  entries.forEach(e => {
+    csv += `${e.label},${e.inside},${e.flat},${e.strength},${e.recovery},${e.shotBefore}\n`;
+  });
+  const blob = new Blob([csv], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "corner_log.csv";
+  a.click();
+};
+
+render();
 </script>
 
 </body>
