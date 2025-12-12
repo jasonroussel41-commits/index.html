@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Corner Log</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .question {
+      margin-bottom: 10px;
+    }
+    .buttons button {
+      margin: 5px 5px 0 0;
+      padding: 10px 14px;
+      font-size: 16px;
+    }
+    button {
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: #eee;
+    }
+    button.active {
+      background: #4caf50;
+      color: #fff;
+    }
+    #submit {
+      width: 100%;
+      font-size: 18px;
+      padding: 12px;
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+    }
+    #log {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Corner Log</h1>
+
+<div class="card">
+  <div class="question">
+    <strong>Label</strong>
+    <div class="buttons" data-field="label">
+      <button>Earned</button>
+      <button>Invited</button>
+      <button>Late</button>
+    </div>
+  </div>
+
+  <div class="question">
+    <strong>Prev ball inside service line?</strong>
+    <div class="buttons" data-field="inside">
+      <button>Yes</button>
+      <button>No</button>
+    </div>
+  </div>
+
+  <div class="question">
+    <strong>Prev ball flat / low?</strong>
+    <div class="buttons" data-field="flat">
+      <button>Yes</button>
+      <button>No</button>
+    </div>
+  </div>
+
+  <div class="question">
+    <strong>Hit to opponent strength?</strong>
+    <div class="buttons" data-field="strength">
+      <button>Yes</button>
+      <button>No</button>
+    </div>
+  </div>
+
+  <div class="question">
+    <strong>Recovery assumed safe rally?</strong>
+    <div class="buttons" data-field="recovery">
+      <button>Yes</button>
+      <button>No</button>
+    </div>
+  </div>
+
+  <button id="submit">Log Corner</button>
+</div>
+
+<div id="log"></div>
+
+<script>
+  let data = [];
+  let current = {};
+  let cornerCount = 0;
+
+  document.querySelectorAll('.buttons').forEach(group => {
+    group.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        current[group.dataset.field] = btn.innerText;
+      });
+    });
+  });
+
+  document.getElementById('submit').addEventListener('click', () => {
+    if (!current.label) {
+      alert("Please select a label");
+      return;
+    }
+
+    cornerCount++;
+
+    const yesCount = ["inside","flat","strength","recovery"]
+      .filter(k => current[k] === "Yes").length;
+
+    const shotBefore = yesCount >= 2 ? "YES" : "NO";
+
+    const entry = {
+      corner: cornerCount,
+      ...current,
+      shotBefore
+    };
+
+    data.push(entry);
+    current = {};
+
+    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+
+    document.getElementById('log').innerHTML =
+      "<strong>Last entry:</strong><br>" +
+      JSON.stringify(entry, null, 2).replace(/\n/g,"<br>");
+
+  });
+</script>
+
+</body>
+</html>
